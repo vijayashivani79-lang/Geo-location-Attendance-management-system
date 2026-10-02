@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard – AttendX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <!-- Leaflet Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green-deep:   #09271a;
+      --green-dark:   #0f3d24;
+      --green-mid:    #165c34;
+      --green-bright: #27a05a;
+      --green-light:  #3ecf7c;
+      --green-glow:   #52e891;
+      --faded-white:  #e8f5ee;
+      --surface:      rgba(255,255,255,0.04);
+      --surface2:     rgba(255,255,255,0.08);
+      --border:       rgba(62,200,124,0.18);
+      --border2:      rgba(62,200,124,0.30);
+      --text:         #e8f5ee;
+      --text-muted:   #8bbfa0;
+      --sidebar-w:    260px;
+    }
+    body { font-family: 'Outfit', sans-serif; background: var(--green-deep); color: var(--text); min-height: 100vh; display: flex; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: linear-gradient(180deg, #0f3d24 0%, #09271a 100%);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+    }
+    .sidebar-brand { padding: 1.8rem 1.5rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+    .brand-icon {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, var(--green-bright), var(--green-glow));
+      border-radius: 12px; display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; box-shadow: 0 0 20px rgba(82,232,145,0.35);
+    }
+    .brand-text h2 { font-size: 1.2rem; font-weight: 700; color: var(--faded-white); }
+    .brand-text span { font-size: 0.75rem; color: var(--text-muted); }
+    .sidebar-nav { flex: 1; padding: 1.2rem 1rem; display: flex; flex-direction: column; gap: 4px; }
+    .nav-section-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); padding: 0.8rem 0.6rem 0.4rem; }
+    .nav-link {
+      display: flex; align-items: center; gap: 12px;
+      padding: 0.7rem 0.9rem; border-radius: 10px;
+      color: var(--text-muted); font-size: 0.9rem; font-weight: 500;
+      text-decoration: none; cursor: pointer;
+      transition: all 0.2s; border: none; background: none; width: 100%; text-align: left;
+    }
+    .nav-link:hover, .nav-link.active { background: rgba(39,160,90,0.18); color: var(--green-light); }
+    .nav-link .icon { font-size: 1.05rem; }
+    .sidebar-footer { padding: 1rem; border-top: 1px solid var(--border); }
+    .user-info { display: flex; align-items: center; gap: 10px; padding: 0.6rem 0.5rem; }
+    .user-avatar { width: 36px; height: 36px; background: linear-gradient(135deg, var(--green-mid), var(--green-bright)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700; color: #fff; }
+    .user-meta strong { display: block; font-size: 0.88rem; color: var(--text); }
+    .user-meta span { font-size: 0.75rem; color: var(--green-bright); }
+    .btn-logout { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 0.65rem; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25); border-radius: 10px; color: #fca5a5; font-family: 'Outfit', sans-serif; font-size: 0.88rem; font-weight: 500; cursor: pointer; text-decoration: none; margin-top: 0.75rem; transition: all 0.2s; }
+    .btn-logout:hover { background: rgba(239,68,68,0.22); }
+
+    /* ── Main ── */
+    .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; }
+    .topbar { padding: 1.3rem 2rem; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02); display: flex; align-items: center; justify-content: space-between; }
+    .topbar h1 { font-size: 1.4rem; font-weight: 700; color: var(--faded-white); }
+    .topbar .breadcrumb { font-size: 0.82rem; color: var(--text-muted); margin-top: 2px; }
+    .time-badge { display: flex; align-items: center; gap: 6px; padding: 0.4rem 0.9rem; border-radius: 20px; background: rgba(39,160,90,0.12); border: 1px solid var(--border2); font-size: 0.82rem; color: var(--green-light); }
+    .content { padding: 2rem; flex: 1; }
+
+    /* Flash */
+    .flash-msg { padding: 0.8rem 1rem; border-radius: 12px; margin-bottom: 1.5rem; font-size: 0.88rem; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+    .flash-msg.error   { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25); color: #fca5a5; }
+    .flash-msg.success { background: rgba(62,200,124,0.12); border: 1px solid rgba(62,200,124,0.25); color: var(--green-glow); }
+
+    /* Stats */
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; margin-bottom: 2rem; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 1.5rem; position: relative; overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+    .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--green-bright), var(--green-glow)); }
+    .stat-card .icon { font-size: 2rem; margin-bottom: 0.8rem; }
+    .stat-card .value { font-size: 2.3rem; font-weight: 800; color: var(--green-light); line-height: 1; }
+    .stat-card .label { font-size: 0.85rem; color: var(--text-muted); margin-top: 6px; }
+
+    /* ─── SET LOCATION SECTION ─── */
+    .location-setter {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 20px;
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+    .location-setter-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.2rem 1.5rem;
+      background: linear-gradient(90deg, rgba(39,160,90,0.12), rgba(82,232,145,0.06));
+      border-bottom: 1px solid var(--border);
+    }
+    .location-setter-header h2 { font-size: 1.05rem; font-weight: 700; color: var(--faded-white); display: flex; align-items: center; gap: 8px; }
+    .current-location-tag {
+      display: flex; align-items: center; gap: 6px;
+      padding: 0.35rem 0.85rem; border-radius: 20px;
+      background: rgba(39,160,90,0.15); border: 1px solid var(--border2);
+      font-size: 0.8rem; color: var(--green-light);
+    }
+    .loc-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green-glow); animation: blink 2s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    .location-setter-body { display: grid; grid-template-columns: 1fr 360px; gap: 0; }
+
+    /* Map */
+    #admin-map {
+      height: 380px;
+      border-right: 1px solid var(--border);
+    }
+    /* Override leaflet tiles to look good */
+    .leaflet-container { background: #0f3d24; }
+
+    /* Controls panel */
+    .loc-controls { padding: 1.4rem; display: flex; flex-direction: column; gap: 1rem; }
+    .loc-controls p { font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; }
+    .loc-controls .hint {
+      display: flex; align-items: flex-start; gap: 8px;
+      background: rgba(39,160,90,0.08); border: 1px solid var(--border); border-radius: 10px;
+      padding: 0.7rem 0.9rem; font-size: 0.8rem; color: var(--text-muted);
+    }
+    .form-grp label { display: block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 5px; }
+    .form-grp input, .form-grp select {
+      width: 100%; padding: 0.65rem 0.85rem;
+      background: rgba(255,255,255,0.06); border: 1px solid var(--border2); border-radius: 10px;
+      color: var(--text); font-family: 'Outfit', sans-serif; font-size: 0.88rem; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-grp input:focus { border-color: var(--green-bright); box-shadow: 0 0 0 3px rgba(39,160,90,0.15); }
+    .coord-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .btn-save-loc {
+      width: 100%; padding: 0.8rem;
+      background: linear-gradient(135deg, var(--green-bright), var(--green-glow));
+      border: none; border-radius: 12px;
+      color: #fff; font-family: 'Outfit', sans-serif; font-size: 0.92rem; font-weight: 700;
+      cursor: pointer; transition: transform 0.2s, box-shadow 0.3s;
+      box-shadow: 0 4px 18px rgba(39,160,90,0.4); margin-top: 4px;
+    }
+    .btn-save-loc:hover { transform: translateY(-2px); box-shadow: 0 7px 25px rgba(39,160,90,0.6); }
+    .btn-save-loc:active { transform: translateY(0); }
+    .btn-use-my-loc {
+      width: 100%; padding: 0.65rem;
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border2); border-radius: 10px;
+      color: var(--green-light); font-family: 'Outfit', sans-serif; font-size: 0.82rem; font-weight: 500;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-use-my-loc:hover { background: rgba(39,160,90,0.15); }
+
+    /* Sections */
+    .section { margin-bottom: 2rem; }
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+    .section-header h2 { font-size: 1.05rem; font-weight: 700; color: var(--faded-white); display: flex; align-items: center; gap: 8px; }
+    .view-all-link { font-size: 0.82rem; color: var(--green-light); text-decoration: none; font-weight: 500; }
+    .view-all-link:hover { color: var(--green-glow); }
+
+    /* Tables */
+    .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: rgba(39,160,90,0.1); border-bottom: 1px solid var(--border); }
+    thead th { padding: 0.85rem 1.2rem; text-align: left; font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--surface2); }
+    tbody td { padding: 0.85rem 1.2rem; font-size: 0.88rem; }
+    .badge { display: inline-block; padding: 0.25rem 0.7rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+    .badge-admin   { background: rgba(139,92,246,0.2); color: #c4b5fd; border: 1px solid rgba(139,92,246,0.3); }
+    .badge-student { background: rgba(39,160,90,0.15); color: var(--green-light); border: 1px solid rgba(39,160,90,0.3); }
+    .badge-present { background: rgba(39,160,90,0.15); color: var(--green-light); border: 1px solid rgba(39,160,90,0.3); }
+    .btn-delete { padding: 0.35rem 0.75rem; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25); border-radius: 8px; color: #fca5a5; font-family:'Outfit',sans-serif; font-size:0.78rem; font-weight:500; cursor:pointer; transition:all 0.2s; }
+    .btn-delete:hover { background: rgba(239,68,68,0.25); }
+    .empty-state { padding: 2.5rem; text-align: center; color: var(--text-muted); font-size: 0.9rem; }
+
+    /* Add user */
+    .add-user-card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 1.4rem; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px; align-items: end; }
+    .btn-add { padding: 0.7rem 1.4rem; background: linear-gradient(135deg, var(--green-bright), var(--green-glow)); border: none; border-radius: 10px; color: #fff; font-family:'Outfit',sans-serif; font-size:0.88rem; font-weight:600; cursor:pointer; white-space:nowrap; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 15px rgba(39,160,90,0.35); }
+    .btn-add:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(39,160,90,0.5); }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 2rem; right: 2rem; padding: 1rem 1.4rem; border-radius: 14px; font-size: 0.9rem; font-weight: 500; z-index: 999; transform: translateY(20px); opacity: 0; transition: all 0.35s; max-width: 360px; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { background: rgba(62,200,124,0.18); border: 1px solid rgba(62,200,124,0.35); color: var(--green-glow); }
+    .toast.error   { background: rgba(239,68,68,0.18); border: 1px solid rgba(239,68,68,0.35); color: #fca5a5; }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(62,200,124,0.3); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">🎓</div>
+    <div class="brand-text"><h2>AttendX</h2><span>Admin Panel</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Overview</div>
+    <a href="/admin_dashboard" class="nav-link active"><span class="icon">📊</span> Dashboard</a>
+    <div class="nav-section-label">Management</div>
+    <a href="/manage_subjects" class="nav-link"><span class="icon">📚</span> Manage Subjects</a>
+    <a href="/view_attendance" class="nav-link"><span class="icon">📋</span> All Attendance</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="user-avatar">{{ session['username'][0].upper() }}</div>
+      <div class="user-meta">
+        <strong>{{ session['username'] }}</strong>
+        <span>Administrator</span>
+      </div>
+    </div>
+    <a href="/logout" class="btn-logout">🚪 Logout</a>
+  </div>
+</aside>
+
+<!-- ── Main ── -->
+<main class="main">
+  <div class="topbar">
+    <div>
+      <h1>Admin Dashboard</h1>
+      <p class="breadcrumb">AttendX › Dashboard</p>
+    </div>
+    <div class="time-badge" id="live-time">🕐 Loading...</div>
+  </div>
+
+  <div class="content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="flash-msg {{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="icon">👥</div>
+        <div class="value">{{ users | length }}</div>
+        <div class="label">Total Users</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon">🎓</div>
+        <div class="value">{{ users | selectattr('role', 'equalto', 'student') | list | length }}</div>
+        <div class="label">Students</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon">✅</div>
+        <div class="value">{{ records | length }}</div>
+        <div class="label">Recent Records</div>
+      </div>
+    </div>
+
+    <!-- ═══ SET ATTENDANCE LOCATION ═══ -->
+    <div class="location-setter">
+      <div class="location-setter-header">
+        <h2>📍 Set Attendance Location</h2>
+        <div class="current-location-tag">
+          <div class="loc-dot"></div>
+          <span id="current-loc-label">{{ campus.name }} • r={{ campus.radius }}m</span>
+        </div>
+      </div>
+      <div class="location-setter-body">
+        <!-- Map -->
+        <div id="admin-map"></div>
+        <!-- Controls -->
+        <div class="loc-controls">
+          <div class="hint">
+            💡 <span>Click anywhere on the map to set the attendance pin, or enter coordinates manually below.</span>
+          </div>
+
+          <div class="form-grp">
+            <label for="loc-name">Location Name</label>
+            <input type="text" id="loc-name" value="{{ campus.name }}" placeholder="e.g. College Campus"/>
+          </div>
+
+          <div class="coord-row">
+            <div class="form-grp">
+              <label for="loc-lat">Latitude</label>
+              <input type="number" id="loc-lat" step="any" value="{{ campus.latitude }}" placeholder="12.9716"/>
+            </div>
+            <div class="form-grp">
+              <label for="loc-lon">Longitude</label>
+              <input type="number" id="loc-lon" step="any" value="{{ campus.longitude }}" placeholder="77.5946"/>
+            </div>
+          </div>
+
+          <div class="form-grp">
+            <label for="loc-radius">Allowed Radius (meters)</label>
+            <input type="number" id="loc-radius" value="{{ campus.radius }}" min="10" max="5000" placeholder="100"/>
+          </div>
+
+          <button class="btn-use-my-loc" onclick="useMyLocation()">📡 Use My Current Location</button>
+          <button class="btn-save-loc" onclick="saveLocation()">💾 Save Attendance Location</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add User -->
+    <div class="section">
+      <div class="section-header"><h2>➕ Add New User</h2></div>
+      <div class="add-user-card">
+        <form method="POST" action="/add_student">
+          <div class="form-row">
+            <div class="form-grp">
+              <label for="new-username">Username</label>
+              <input type="text" id="new-username" name="username" placeholder="Enter username" required/>
+            </div>
+            <div class="form-grp">
+              <label for="new-password">Password</label>
+              <input type="password" id="new-password" name="password" placeholder="Enter password" required/>
+            </div>
+            <div class="form-grp">
+              <label for="new-role">Role</label>
+              <select id="new-role" name="role">
+                <option value="student">👨‍🎓 Student</option>
+                <option value="admin">👨‍💼 Admin</option>
+              </select>
+            </div>
+            <div class="form-grp">
+              <button type="submit" class="btn-add">Add User</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="section">
+      <div class="section-header"><h2>👥 Registered Users</h2></div>
+      <div class="table-wrap">
+        {% if users %}
+        <table>
+          <thead><tr><th>#</th><th>Username</th><th>Role</th><th>Action</th></tr></thead>
+          <tbody>
+            {% for u in users %}
+            <tr>
+              <td style="color:var(--text-muted);">{{ u.id }}</td>
+              <td><strong>{{ u.username }}</strong></td>
+              <td>
+                <span class="badge {{ 'badge-admin' if u.role == 'admin' else 'badge-student' }}">
+                  {{ '👨‍💼 Admin' if u.role == 'admin' else '👨‍🎓 Student' }}
+                </span>
+              </td>
+              <td>
+                {% if u.id != session['user_id'] %}
+                <form method="POST" action="/delete_user/{{ u.id }}" onsubmit="return confirm('Delete {{ u.username }}?')">
+                  <button type="submit" class="btn-delete">Delete</button>
+                </form>
+                {% else %}
+                <span style="color:var(--text-muted);font-size:0.78rem;">You</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">No users found.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Attendance Records -->
+    <div class="section">
+      <div class="section-header">
+        <h2>📋 Recent Attendance</h2>
+        <a href="/view_attendance" class="view-all-link">View all →</a>
+      </div>
+      <div class="table-wrap">
+        {% if records %}
+        <table>
+          <thead><tr><th>Student</th><th>Date & Time</th><th>Status</th><th>Subject</th><th>Coordinates</th></tr></thead>
+          <tbody>
+            {% for r in records %}
+            <tr>
+              <td><strong>{{ r.username }}</strong></td>
+              <td style="color:var(--text-muted);">{{ r.time.strftime('%d %b %Y, %I:%M %p') }}</td>
+              <td><span class="badge badge-present">✅ {{ r.status }}</span></td>
+              <td style="color:var(--text-muted);font-size:0.82rem;">
+                {% if r.subject_name %}<span style="color:var(--green-light);">📚 {{ r.subject_name }}</span>{% else %}—{% endif %}
+              </td>
+              <td style="color:var(--text-muted);font-size:0.8rem;">
+                {% if r.latitude %}{{ "%.4f"|format(r.latitude) }}, {{ "%.4f"|format(r.longitude) }}{% else %}—{% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">No attendance records yet.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── Live clock ──
+  function updateTime() {
+    const now = new Date();
+    document.getElementById('live-time').textContent = '🕐 ' + now.toLocaleDateString('en-IN', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+  }
+  updateTime(); setInterval(updateTime, 60000);
+
+  // ── Init map ──
+  const initLat = {{ campus.latitude }};
+  const initLon = {{ campus.longitude }};
+  const initRadius = {{ campus.radius }};
+
+  const map = L.map('admin-map', { zoomControl: true }).setView([initLat, initLon], 16);
+
+  // Dark-friendly tile layer
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 19
+  }).addTo(map);
+
+  // Custom green pin icon
+  const pinIcon = L.divIcon({
+    className: '',
+    html: `<div style="
+      width:36px;height:36px;
+      background:linear-gradient(135deg,#27a05a,#52e891);
+      border-radius:50% 50% 50% 0;
+      transform:rotate(-45deg);
+      border:3px solid #fff;
+      box-shadow:0 4px 15px rgba(39,160,90,0.6);
+    "></div>`,
+    iconSize: [36, 36],
+    iconAnchor: [18, 36]
+  });
+
+  let marker = L.marker([initLat, initLon], { icon: pinIcon, draggable: true }).addTo(map);
+  let radiusCircle = L.circle([initLat, initLon], {
+    radius: initRadius,
+    color: '#27a05a', fillColor: '#3ecf7c', fillOpacity: 0.12,
+    weight: 2, dashArray: '6 4'
+  }).addTo(map);
+
+  function updateMapUI(lat, lon) {
+    const r = parseInt(document.getElementById('loc-radius').value) || 100;
+    marker.setLatLng([lat, lon]);
+    radiusCircle.setLatLng([lat, lon]);
+    radiusCircle.setRadius(r);
+    document.getElementById('loc-lat').value = lat.toFixed(6);
+    document.getElementById('loc-lon').value = lon.toFixed(6);
+  }
+
+  // Click map to move pin
+  map.on('click', (e) => updateMapUI(e.latlng.lat, e.latlng.lng));
+  // Drag pin
+  marker.on('dragend', () => {
+    const ll = marker.getLatLng();
+    updateMapUI(ll.lat, ll.lng);
+  });
+  // Radius input updates circle
+  document.getElementById('loc-radius').addEventListener('input', () => {
+    const ll = marker.getLatLng();
+    updateMapUI(ll.lat, ll.lng);
+  });
+  // Manual coord inputs update map
+  ['loc-lat','loc-lon'].forEach(id => {
+    document.getElementById(id).addEventListener('change', () => {
+      const lat = parseFloat(document.getElementById('loc-lat').value);
+      const lon = parseFloat(document.getElementById('loc-lon').value);
+      if (!isNaN(lat) && !isNaN(lon)) {
+        map.setView([lat, lon], 16);
+        updateMapUI(lat, lon);
+      }
+    });
+  });
+
+  // Use my location
+  function useMyLocation() {
+    if (!navigator.geolocation) { showToast('Geolocation not supported.', 'error'); return; }
+    navigator.geolocation.getCurrentPosition(pos => {
+      const { latitude, longitude } = pos.coords;
+      map.setView([latitude, longitude], 17);
+      updateMapUI(latitude, longitude);
+      showToast('📍 Your location applied to map!', 'success');
+    }, () => showToast('Could not get your location.', 'error'), { enableHighAccuracy: true });
+  }
+
+  // Save location
+  function saveLocation() {
+    const name   = document.getElementById('loc-name').value.trim() || 'College Campus';
+    const lat    = parseFloat(document.getElementById('loc-lat').value);
+    const lon    = parseFloat(document.getElementById('loc-lon').value);
+    const radius = parseInt(document.getElementById('loc-radius').value) || 100;
+    if (isNaN(lat) || isNaN(lon)) { showToast('❌ Please set a valid location on the map.', 'error'); return; }
+    fetch('/set_location', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, latitude: lat, longitude: lon, radius })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        showToast('✅ ' + data.message, 'success');
+        document.getElementById('current-loc-label').textContent = `${name} • r=${radius}m`;
+      } else {
+        showToast('❌ ' + data.message, 'error');
+      }
+    })
+    .catch(() => showToast('❌ Network error.', 'error'));
+  }
+
+  function showToast(msg, type) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = `toast ${type} show`;
+    setTimeout(() => t.classList.remove('show'), 4000);
+  }
+</script>
+</body>
+</html>

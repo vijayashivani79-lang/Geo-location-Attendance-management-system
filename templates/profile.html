@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Student Profile – AttendX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green-deep:   #09271a;
+      --green-dark:   #0f3d24;
+      --green-mid:    #165c34;
+      --green-bright: #27a05a;
+      --green-light:  #3ecf7c;
+      --green-glow:   #52e891;
+      --faded-white:  #e8f5ee;
+      --surface:      rgba(255,255,255,0.04);
+      --surface2:     rgba(255,255,255,0.08);
+      --border:       rgba(62,200,124,0.18);
+      --border2:      rgba(62,200,124,0.30);
+      --text:         #e8f5ee;
+      --text-muted:   #8bbfa0;
+      --sidebar-w:    240px;
+    }
+    body { font-family: 'Outfit', sans-serif; background: var(--green-deep); color: var(--text); min-height: 100vh; display: flex; }
+
+    /* Sidebar */
+    .sidebar { width: var(--sidebar-w); background: linear-gradient(180deg, #0f3d24 0%, #09271a 100%); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; }
+    .sidebar-brand { padding: 1.8rem 1.5rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+    .brand-icon { width: 44px; height: 44px; background: linear-gradient(135deg, var(--green-bright), var(--green-glow)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; box-shadow: 0 0 20px rgba(82,232,145,0.35); }
+    .brand-text h2 { font-size: 1.2rem; font-weight: 700; color: var(--faded-white); }
+    .brand-text span { font-size: 0.75rem; color: var(--text-muted); }
+    .sidebar-nav { flex: 1; padding: 1.2rem 1rem; }
+    .nav-section-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); padding: 0.8rem 0.6rem 0.4rem; }
+    .nav-link { display: flex; align-items: center; gap: 12px; padding: 0.7rem 0.9rem; border-radius: 10px; color: var(--text-muted); font-size: 0.9rem; font-weight: 500; text-decoration: none; transition: all 0.2s; }
+    .nav-link:hover, .nav-link.active { background: rgba(39,160,90,0.18); color: var(--green-light); }
+    .sidebar-footer { padding: 1rem; border-top: 1px solid var(--border); }
+    .user-info { display: flex; align-items: center; gap: 10px; padding: 0.6rem 0.5rem; }
+    .user-avatar { width: 36px; height: 36px; background: linear-gradient(135deg, var(--green-mid), var(--green-bright)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700; color: #fff; }
+    .user-meta strong { display: block; font-size: 0.88rem; color: var(--text); }
+    .user-meta span { font-size: 0.75rem; color: var(--green-bright); }
+    .btn-logout { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 0.65rem; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25); border-radius: 10px; color: #fca5a5; font-family:'Outfit',sans-serif; font-size:0.88rem; font-weight:500; cursor:pointer; text-decoration:none; margin-top:0.75rem; transition:all 0.2s; }
+    .btn-logout:hover { background: rgba(239,68,68,0.22); }
+
+    /* Main */
+    .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; }
+    .topbar { padding: 1.3rem 2rem; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02); display: flex; align-items: center; justify-content: space-between; }
+    .topbar h1 { font-size: 1.4rem; font-weight: 700; color: var(--faded-white); }
+    .topbar .breadcrumb { font-size: 0.82rem; color: var(--text-muted); margin-top: 2px; }
+    .content { padding: 2rem; flex: 1; max-width: 900px; margin: 0 auto; width: 100%; }
+
+    .flash-msg { padding: 0.8rem 1rem; border-radius: 12px; margin-bottom: 1.5rem; font-size: 0.88rem; font-weight: 500; }
+    .flash-msg.error   { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25); color: #fca5a5; }
+    .flash-msg.success { background: rgba(62,200,124,0.12); border: 1px solid rgba(62,200,124,0.25); color: var(--green-glow); }
+
+    /* Card */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; margin-bottom: 2rem; }
+    .card-header { padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border); background: linear-gradient(90deg, rgba(39,160,90,0.1), transparent); h3: font-size: 1rem; font-weight: 700; color: var(--faded-white); }
+    .card-body { padding: 1.5rem; }
+
+    /* Forms */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+    .form-grp { margin-bottom: 1rem; }
+    .form-grp label { display: block; font-size: 0.78rem; font-weight: 500; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-grp input { width: 100%; padding: 0.75rem 0.9rem; background: rgba(255,255,255,0.06); border: 1px solid var(--border2); border-radius: 10px; color: var(--text); font-family: 'Outfit', sans-serif; font-size: 0.9rem; outline: none; transition: all 0.2s; }
+    .form-grp input:focus { border-color: var(--green-bright); box-shadow: 0 0 0 3px rgba(39,160,90,0.15); }
+    .form-grp input:disabled { opacity: 0.6; cursor: not-allowed; }
+    
+    .btn-save { padding: 0.85rem 1.5rem; background: linear-gradient(135deg, var(--green-bright), var(--green-glow)); border: none; border-radius: 12px; color: #fff; font-family:'Outfit',sans-serif; font-size:0.95rem; font-weight:700; cursor: pointer; transition: transform 0.2s, box-shadow 0.3s; box-shadow: 0 4px 15px rgba(39,160,90,0.4); margin-top: 0.5rem; width: 100%; }
+    .btn-save:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(39,160,90,0.6); }
+
+    .full-width { grid-column: 1 / -1; }
+  </style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">🎓</div>
+    <div class="brand-text"><h2>AttendX</h2><span>Student Portal</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">My Portal</div>
+    <a href="/student_dashboard" class="nav-link"><span>📊</span> Dashboard</a>
+    <a href="/analytics" class="nav-link"><span>📈</span> Analytics</a>
+    <a href="/profile" class="nav-link active"><span>👤</span> Profile Settings</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="user-avatar">{{ session['username'][0].upper() }}</div>
+      <div class="user-meta">
+        <strong>{{ session['username'] }}</strong>
+        <span>Student</span>
+      </div>
+    </div>
+    <a href="/logout" class="btn-logout">🚪 Logout</a>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div>
+      <h1>Profile Settings</h1>
+      <p class="breadcrumb">AttendX › My Portal › Profile</p>
+    </div>
+  </div>
+
+  <div class="content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="flash-msg {{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <div class="card">
+      <div class="card-header">
+        <h3>👤 Personal Details</h3>
+      </div>
+      <div class="card-body">
+        <form method="POST" action="/profile">
+          <div class="form-grid">
+            <div class="form-grp full-width">
+              <label>Username</label>
+              <input type="text" value="{{ session['username'] }}" disabled title="Username cannot be changed" />
+            </div>
+            
+            <div class="form-grp full-width">
+              <label>Full Name</label>
+              <input type="text" name="full_name" value="{{ profile.get('full_name', '') }}" placeholder="e.g. John Doe" required />
+            </div>
+
+            <div class="form-grp">
+              <label>Degree</label>
+              <input type="text" name="degree" value="{{ profile.get('degree', '') }}" placeholder="e.g. B.Tech" required />
+            </div>
+
+            <div class="form-grp">
+              <label>Branch</label>
+              <input type="text" name="branch" value="{{ profile.get('branch', '') }}" placeholder="e.g. Computer Science" required />
+            </div>
+
+            <div class="form-grp">
+              <label>Specialization</label>
+              <input type="text" name="specialization" value="{{ profile.get('specialization', '') }}" placeholder="e.g. AI & ML" />
+            </div>
+
+            <div class="form-grp">
+              <label>Year</label>
+              <input type="text" name="year" value="{{ profile.get('year', '') }}" placeholder="e.g. 3rd Year" required />
+            </div>
+            
+            <div class="form-grp">
+              <label>Section</label>
+              <input type="text" name="section" value="{{ profile.get('section', '') }}" placeholder="e.g. A" required />
+            </div>
+            
+            <div class="form-grp full-width">
+              <button type="submit" class="btn-save">Save Profile Details</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Password Change Section -->
+    <div class="card">
+      <div class="card-header">
+        <h3>🔒 Change Password</h3>
+      </div>
+      <div class="card-body">
+        <form method="POST" action="/change_password">
+          <div class="form-grp">
+            <label>Current Password</label>
+            <input type="password" name="old_password" placeholder="Enter current password" required />
+          </div>
+          <div class="form-grp">
+            <label>New Password</label>
+            <input type="password" name="new_password" placeholder="Enter new password" required />
+          </div>
+          <div class="form-grp">
+            <button type="submit" class="btn-save">Update Password</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+</body>
+</html>

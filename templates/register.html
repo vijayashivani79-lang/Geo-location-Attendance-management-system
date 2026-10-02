@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register – AttendX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green-deep:   #0d3320;
+      --green-dark:   #134d30;
+      --green-mid:    #1a6b40;
+      --green-bright: #27a05a;
+      --green-light:  #3ecf7c;
+      --green-glow:   #52e891;
+      --faded-white:  #e8f5ee;
+      --surface:      rgba(255,255,255,0.06);
+      --surface2:     rgba(255,255,255,0.10);
+      --border:       rgba(62,200,124,0.25);
+      --text:         #e8f5ee;
+      --text-muted:   #9ecfb0;
+    }
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--green-deep);
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; position: relative;
+    }
+    body::before, body::after {
+      content: ''; position: fixed; border-radius: 50%;
+      filter: blur(80px); opacity: 0.15;
+      animation: floatBlob 10s ease-in-out infinite alternate;
+    }
+    body::before { width: 450px; height: 450px; background: var(--green-bright); top: -100px; right: -100px; }
+    body::after  { width: 350px; height: 350px; background: var(--green-light); bottom: -80px; left: -80px; animation-delay: -4s; }
+    @keyframes floatBlob {
+      from { transform: translate(0,0) scale(1); }
+      to   { transform: translate(30px,25px) scale(1.08); }
+    }
+    .grid-bg {
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(62,200,124,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(62,200,124,0.05) 1px, transparent 1px);
+      background-size: 40px 40px; pointer-events: none;
+    }
+    .auth-wrapper { position: relative; z-index: 10; width: 100%; max-width: 440px; padding: 20px; }
+    .logo-section { text-align: center; margin-bottom: 2rem; }
+    .logo-icon {
+      width: 70px; height: 70px;
+      background: linear-gradient(135deg, var(--green-bright), var(--green-glow));
+      border-radius: 20px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 2rem; margin-bottom: 1rem;
+      box-shadow: 0 0 30px rgba(82,232,145,0.4);
+      animation: pulse 3s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { box-shadow: 0 0 30px rgba(82,232,145,0.4); }
+      50%      { box-shadow: 0 0 50px rgba(82,232,145,0.7); }
+    }
+    .logo-section h1 {
+      font-size: 2.2rem; font-weight: 800;
+      background: linear-gradient(135deg, var(--green-light), var(--green-glow));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .logo-section p { color: var(--text-muted); font-size: 0.9rem; margin-top: 4px; }
+    .card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border); border-radius: 24px; padding: 2.5rem;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 25px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+    .card h2 { font-size: 1.6rem; font-weight: 700; color: var(--text); margin-bottom: 0.3rem; }
+    .card .subtitle { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; }
+    .flash-msg { padding: 0.75rem 1rem; border-radius: 12px; margin-bottom: 1.2rem; font-size: 0.88rem; font-weight: 500; }
+    .flash-msg.error   { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; }
+    .flash-msg.success { background: rgba(62,200,124,0.15); border: 1px solid rgba(62,200,124,0.3); color: var(--green-glow); }
+    .form-group { margin-bottom: 1.2rem; }
+    .form-group label {
+      display: block; font-size: 0.85rem; font-weight: 500;
+      color: var(--text-muted); margin-bottom: 0.5rem;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .form-group input,
+    .form-group select {
+      width: 100%; padding: 0.85rem 1.1rem;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      color: var(--text); font-family: 'Outfit', sans-serif; font-size: 0.95rem; outline: none;
+      transition: border-color 0.3s, box-shadow 0.3s, background 0.3s;
+    }
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: var(--green-bright); background: var(--surface2);
+      box-shadow: 0 0 0 3px rgba(39,160,90,0.2);
+    }
+    .form-group select option { background: var(--green-dark); }
+
+    /* Role selector */
+    .role-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .role-option { display: none; }
+    .role-label {
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      padding: 1rem; border: 1px solid var(--border); border-radius: 14px;
+      cursor: pointer; color: var(--text-muted); font-size: 0.85rem; font-weight: 500;
+      transition: all 0.25s; background: var(--surface);
+    }
+    .role-label span.icon { font-size: 1.6rem; }
+    .role-option:checked + .role-label {
+      border-color: var(--green-bright); background: rgba(39,160,90,0.15);
+      color: var(--green-light); box-shadow: 0 0 0 2px rgba(39,160,90,0.25);
+    }
+
+    .btn-primary {
+      width: 100%; padding: 0.95rem;
+      background: linear-gradient(135deg, var(--green-bright), var(--green-glow));
+      border: none; border-radius: 12px;
+      color: #fff; font-family: 'Outfit', sans-serif; font-size: 1rem; font-weight: 600;
+      cursor: pointer; margin-top: 0.5rem;
+      transition: transform 0.2s, box-shadow 0.3s;
+      box-shadow: 0 4px 20px rgba(39,160,90,0.4);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(39,160,90,0.6); }
+    .btn-primary:active { transform: translateY(0); }
+    .card-footer { text-align: center; margin-top: 1.5rem; color: var(--text-muted); font-size: 0.88rem; }
+    .card-footer a { color: var(--green-light); text-decoration: none; font-weight: 600; }
+    .card-footer a:hover { color: var(--green-glow); }
+  </style>
+</head>
+<body>
+  <div class="grid-bg"></div>
+  <div class="auth-wrapper">
+    <div class="logo-section">
+      <div class="logo-icon">🎓</div>
+      <h1>AttendX</h1>
+      <p>Smart Geo-Location Attendance System</p>
+    </div>
+
+    <div class="card">
+      <h2>Create Account</h2>
+      <p class="subtitle">Join AttendX to start tracking attendance</p>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          <div class="flash-msg {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endwith %}
+
+      <form method="POST" action="/register">
+        <div class="form-group">
+          <label for="reg-username">Username</label>
+          <input type="text" id="reg-username" name="username" placeholder="Choose a username" required/>
+        </div>
+        <div class="form-group">
+          <label for="reg-password">Password</label>
+          <input type="password" id="reg-password" name="password" placeholder="Create a strong password" required/>
+        </div>
+        <div class="form-group">
+          <label>Role</label>
+          <div class="role-selector">
+            <div>
+              <input type="radio" name="role" id="role-student" value="student" class="role-option" checked/>
+              <label class="role-label" for="role-student">
+                <span class="icon">👨‍🎓</span>
+                Student
+              </label>
+            </div>
+            <div>
+              <input type="radio" name="role" id="role-admin" value="admin" class="role-option"/>
+              <label class="role-label" for="role-admin">
+                <span class="icon">👨‍💼</span>
+                Admin
+              </label>
+            </div>
+          </div>
+        </div>
+        <button type="submit" class="btn-primary">Create Account →</button>
+      </form>
+
+      <div class="card-footer">
+        Already have an account? <a href="/login">Sign in</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

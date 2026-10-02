@@ -72,7 +72,7 @@ predicted_attendance = (current_present + (rate * future_days)) / (total_days + 
 The geo-location validation heavily relies on frontend-to-backend coordinate syncing.
 
 - **Frontend Collection:** Uses the native browser API (`navigator.geolocation.getCurrentPosition()`) to retrieve exact Latitude and Longitude variables from the student's device.
-- **Backend Validation:** The Flask backend utilizes the Python `geopy` library (or equivalent Haversine mathematics).
+- **Backend Validation:** The Flask backend uses Haversine mathematics to calculate the distance.
 - **Purpose:** Calculates the precise geodesic distance between the student's reported location and the fixed, admin-defined attendance 'hotspot'.
 - **Geo-Fencing Logic:**
   - If calculated distance `≤ 100 meters` → **Allow** attendance marking.
@@ -96,7 +96,7 @@ The geo-location validation heavily relies on frontend-to-backend coordinate syn
 - **JavaScript:** Dynamic behavior, mapping, asynchronous fetch requests, and geolocation handling.
 
 ### External Libraries
-- `geopy` (or `math`): Distance calculations for accurate geo-fencing.
+- `math`: Distance calculations for geo-fencing.
 - `datetime`: Strict temporal tracking for streaks and predictions.
 - *(Optional)* `scikit-learn`: Planned for advanced Machine Learning prediction models in future implementations.
 
@@ -149,19 +149,21 @@ The relational schema is built on core linked tables ensuring strong data integr
 Follow these steps to deploy the application locally.
 
 1. **Install Dependencies:**
-   Ensure Python is installed, then run the following in your terminal:
+   Create and activate the virtual environment, then install the project requirements:
    ```bash
-   pip install flask psycopg2-binary geopy
+   python -m venv venv
+   venv\Scripts\activate
+   pip install -r requirements.txt
    ```
 
-2. **Setup PostgreSQL Database:**
-   - Create a database in your local PostgreSQL instance named `attendance_system`.
-   - Update the connection credentials (User and Password) within the `db.py` file to match your local setup.
+2. **Configure PostgreSQL:**
+   - Copy `.env.example` to `.env` and set `POSTGRES_PASSWORD` to your local PostgreSQL password.
+   - Ensure PostgreSQL is running. The application creates the `geo_data` database and required tables automatically.
 
 3. **Run the Application:**
-   Execute the core Python script to start the Flask development server:
+   Start the Flask development server:
    ```bash
-   python app.py
+   venv\Scripts\python.exe app.py
    ```
 
 4. **Access the Portal:**

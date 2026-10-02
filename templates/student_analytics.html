@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Student Analytics – AttendX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green-deep:   #09271a;
+      --green-dark:   #0f3d24;
+      --green-mid:    #165c34;
+      --green-bright: #27a05a;
+      --green-light:  #3ecf7c;
+      --green-glow:   #52e891;
+      --faded-white:  #e8f5ee;
+      --surface:      rgba(255,255,255,0.04);
+      --surface2:     rgba(255,255,255,0.08);
+      --border:       rgba(62,200,124,0.18);
+      --text:         #e8f5ee;
+      --text-muted:   #8bbfa0;
+      
+      --danger:       #ef4444;
+      --warning:      #f59e0b;
+      --safe:         #3ecf7c;
+      
+      --sidebar-w:    240px;
+    }
+    body { font-family: 'Outfit', sans-serif; background: var(--green-deep); color: var(--text); min-height: 100vh; display: flex; }
+
+    /* Sidebar */
+    .sidebar { width: var(--sidebar-w); background: linear-gradient(180deg, #0f3d24 0%, #09271a 100%); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; }
+    .sidebar-brand { padding: 1.8rem 1.5rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+    .brand-icon { width: 44px; height: 44px; background: linear-gradient(135deg, var(--green-bright), var(--green-glow)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; box-shadow: 0 0 20px rgba(82,232,145,0.35); }
+    .brand-text h2 { font-size: 1.2rem; font-weight: 700; color: var(--faded-white); }
+    .brand-text span { font-size: 0.75rem; color: var(--text-muted); }
+    .sidebar-nav { flex: 1; padding: 1.2rem 1rem; }
+    .nav-section-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); padding: 0.8rem 0.6rem 0.4rem; }
+    .nav-link { display: flex; align-items: center; gap: 12px; padding: 0.7rem 0.9rem; border-radius: 10px; color: var(--text-muted); font-size: 0.9rem; font-weight: 500; text-decoration: none; transition: all 0.2s; }
+    .nav-link:hover, .nav-link.active { background: rgba(39,160,90,0.18); color: var(--green-light); }
+    .sidebar-footer { padding: 1rem; border-top: 1px solid var(--border); }
+    .user-info { display: flex; align-items: center; gap: 10px; padding: 0.6rem 0.5rem; }
+    .user-avatar { width: 36px; height: 36px; background: linear-gradient(135deg, var(--green-mid), var(--green-bright)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700; color: #fff; }
+    .user-meta strong { display: block; font-size: 0.88rem; color: var(--text); }
+    .user-meta span { font-size: 0.75rem; color: var(--green-bright); }
+    .btn-logout { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 0.65rem; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25); border-radius: 10px; color: #fca5a5; font-family:'Outfit',sans-serif; font-size:0.88rem; font-weight:500; cursor:pointer; text-decoration:none; margin-top:0.75rem; transition:all 0.2s; }
+
+    /* Main Area */
+    .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; }
+    .topbar { padding: 1.3rem 2rem; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02); display: flex; align-items: center; justify-content: space-between; }
+    .topbar h1 { font-size: 1.4rem; font-weight: 700; color: var(--faded-white); }
+    .topbar .breadcrumb { font-size: 0.82rem; color: var(--text-muted); margin-top: 2px; }
+    
+    .content { padding: 2rem; max-width: 1200px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; }
+
+    /* Dashboard Grid */
+    .row { display: grid; gap: 1.5rem; }
+    .row.stats { grid-template-columns: repeat(4, 1fr); }
+    .row.split { grid-template-columns: 2fr 1fr; }
+
+    /* Card Panels */
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; position: relative; overflow: hidden; }
+    .panel.primary-stat { background: linear-gradient(135deg, rgba(39,160,90,0.15), rgba(9,39,26,0.8)); border-color: rgba(62,200,124,0.3); }
+    .panel h3 { font-size: 0.9rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 8px; }
+    .panel .stat-val { font-size: 2.5rem; font-weight: 800; color: #fff; line-height: 1; margin: 0.5rem 0; }
+    .panel .stat-label { font-size: 0.85rem; color: var(--text-muted); }
+
+    /* Risk indicators */
+    .badge-safe { color: var(--safe); background: rgba(62,207,124,0.15); padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; }
+    .badge-warning { color: var(--warning); background: rgba(245,158,11,0.15); padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; }
+    .badge-danger { color: var(--danger); background: rgba(239,68,68,0.15); padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; }
+    
+    .text-safe { color: var(--safe); }
+    .text-warning { color: var(--warning); }
+    .text-danger { color: var(--danger); }
+
+    /* Subject Table */
+    .subject-table a { color: inherit; text-decoration: none; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th { text-align: left; padding: 0.8rem 1rem; border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+    td { padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 0.95rem; }
+    tr:last-child td { border-bottom: none; }
+
+    /* Progress bars */
+    .progress-track { width: 100px; height: 8px; background: rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden; display: inline-block; vertical-align: middle; margin-left: 10px; }
+    .progress-fill { height: 100%; border-radius: 4px; }
+    .progress-fill.safe { background: var(--safe); }
+    .progress-fill.warning { background: var(--warning); }
+    .progress-fill.danger { background: var(--danger); }
+
+    /* Small Insight Cards inside panels */
+    .insight-box { background: rgba(0,0,0,0.2); padding: 1.2rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-top: 1rem; }
+    .insight-box.alert { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.2); }
+    .insight-box.success { background: rgba(62,207,124,0.1); border-color: rgba(62,207,124,0.2); }
+    
+    .insight-box h4 { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 1px; }
+    .insight-box p { font-size: 1.1rem; font-weight: 600; color: #fff; }
+    .insight-box .desc { font-size: 0.85rem; color: var(--text-muted); margin-top: 0.3rem; font-weight: 400; }
+    
+    /* Perf Score */
+    .perf-circle { width: 120px; height: 120px; border-radius: 50%; border: 8px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; margin: 1rem auto; position: relative; }
+    .perf-circle .val { font-size: 2.2rem; font-weight: 800; color: var(--green-glow); }
+    .perf-circle .sub { font-size: 1rem; color: var(--text-muted); margin-left: 2px;}
+
+    @media(max-width: 1024px) {
+      .row.stats { grid-template-columns: repeat(2, 1fr); }
+      .row.split { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">🎓</div>
+    <div class="brand-text"><h2>AttendX</h2><span>Student Portal</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">My Portal</div>
+    <a href="/student_dashboard" class="nav-link"><span>📊</span> Dashboard</a>
+    <a href="/analytics" class="nav-link active"><span>📈</span> Analytics</a>
+    <a href="/profile" class="nav-link"><span>👤</span> Profile Settings</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="user-avatar">{{ session['username'][0].upper() }}</div>
+      <div class="user-meta">
+        <strong>{{ session['username'] }}</strong>
+        <span>Student</span>
+      </div>
+    </div>
+    <a href="/logout" class="btn-logout">🚪 Logout</a>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div>
+      <h1>Attendance Analytics</h1>
+      <p class="breadcrumb">AttendX › My Portal › Analytics</p>
+    </div>
+    <div>
+      <span class="badge-{{ data.risk_class }}">Status: {{ data.risk_level }}</span>
+    </div>
+  </div>
+
+  <div class="content">
+    
+    <!-- Top 4 Data Points -->
+    <div class="row stats">
+      <div class="panel primary-stat">
+        <h3>🎯 Overall Attendance</h3>
+        <div class="stat-val text-{{ data.risk_class }}">{{ data.attendance_pct }}%</div>
+        <div class="stat-label">{{ data.total_present }} out of {{ data.total_days }} days</div>
+      </div>
+      
+      <div class="panel">
+        <h3>🔥 Current Streak</h3>
+        <div class="stat-val">{{ data.current_streak }}</div>
+        <div class="stat-label">Consecutive days present</div>
+        <div style="font-size: 0.8rem; margin-top: 10px; color: var(--text-muted);">Longest streak: {{ data.longest_streak }}</div>
+      </div>
+      
+      <div class="panel">
+        <h3>📉 Absences</h3>
+        <div class="stat-val text-danger">{{ data.absent }}</div>
+        <div class="stat-label">Total days missed</div>
+      </div>
+
+      <div class="panel">
+        <h3>⏱️ Trend</h3>
+        <div class="stat-val" style="text-transform: capitalize; font-size: 2rem;">
+          {% if data.trend == 'improving' %}<span class="text-safe">↗ Improving</span>
+          {% elif data.trend == 'declining' %}<span class="text-danger">↘ Declining</span>
+          {% else %}<span class="text-warning">→ Stable</span>{% endif %}
+        </div>
+        <div class="stat-label">Recent attendance consistency</div>
+      </div>
+    </div>
+
+    <div class="row split">
+      <!-- Left Column: Subjects & Insights -->
+      <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        
+        <div class="panel">
+          <h3>📘 Subject-wise Analysis</h3>
+          <div style="overflow-x: auto;">
+            <table class="subject-table">
+              <thead>
+                <tr>
+                  <th>Subject</th>
+                  <th>Attendance</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if not data.subject_stats %}
+                <tr><td colspan="3" style="text-align: center; color: var(--text-muted);">No subjects assigned yet.</td></tr>
+                {% else %}
+                  {% for sub in data.subject_stats %}
+                  <tr>
+                    <td style="font-weight: 500;">{{ sub.name }}</td>
+                    <td>
+                      {{ sub.pct }}% ({{ sub.present }}/{{ sub.total }})
+                      <div class="progress-track">
+                          <div class="progress-fill {% if sub.level == 'strong' %}safe{% elif sub.level == 'weak' %}danger{% else %}warning{% endif %}" style="width: {{ sub.pct }}%"></div>
+                      </div>
+                    </td>
+                    <td>
+                      {% if sub.level == 'strong' %}<span class="badge-safe">Strong</span>
+                      {% elif sub.level == 'weak' %}<span class="badge-danger">Weak</span>
+                      {% else %}<span class="badge-warning">Average</span>{% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>📅 Day-of-Week Patterns</h3>
+          <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Analysis of days you are most likely to be present.</p>
+          <div style="display: flex; justify-content: space-between; gap: 1rem;">
+            <div class="insight-box" style="flex: 1; margin-top: 0;">
+              <h4>Most Active Day</h4>
+              <p>{{ data.best_day }}</p>
+              <div class="desc">Highest attendance rate</div>
+            </div>
+            <div class="insight-box" style="flex: 1; margin-top: 0;">
+              <h4>Least Active Day</h4>
+              <p>{{ data.low_day }}</p>
+              <div class="desc">Lowest attendance rate</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Predictions & Score -->
+      <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        
+        <div class="panel" style="text-align: center;">
+          <h3>🧠 Performance Score</h3>
+          <div class="perf-circle">
+            <span class="val">{{ data.performance_score }}<span class="sub">/100</span></span>
+          </div>
+          <p style="font-size: 0.85rem; color: var(--text-muted);">Based on attendance rate and consistency over time.</p>
+        </div>
+
+        <div class="panel">
+          <h3>🔮 Predictive Model</h3>
+          
+          <div class="insight-box {% if data.high_risk_pred %}alert{% else %}success{% endif %}">
+            <h4>End-of-Month Forecast</h4>
+            <p>{{ data.predicted_pct }}%</p>
+            <div class="desc">Predicted attendance if current trend continues.</div>
+          </div>
+
+          {% if data.attendance_pct < 75 and data.total_days > 0 %}
+          <div class="insight-box alert" style="background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.2);">
+            <h4 style="color: var(--warning);">⚠️ Recovery Needed</h4>
+            <p style="color: var(--warning);">{{ data.classes_needed }} Days</p>
+            <div class="desc">Consecutive classes needed to reach 75% required attendance.</div>
+          </div>
+          {% elif data.high_risk_pred %}
+          <div class="insight-box alert">
+            <h4 style="color: var(--danger);">🚨 Warning</h4>
+            <div class="desc" style="color: #fca5a5;">High risk of falling below required attendance levels based on recent habits.</div>
+          </div>
+          {% else %}
+          <div class="insight-box success">
+            <h4 style="color: var(--safe);">✅ On Track</h4>
+            <div class="desc" style="color: var(--safe);">Keep up the current pace to maintain a healthy attendance record.</div>
+          </div>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+  </div>
+</main>
+
+</body>
+</html>

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>All Attendance – AttendX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green-deep:   #09271a;
+      --green-dark:   #0f3d24;
+      --green-bright: #27a05a;
+      --green-light:  #3ecf7c;
+      --green-glow:   #52e891;
+      --faded-white:  #e8f5ee;
+      --surface:      rgba(255,255,255,0.04);
+      --surface2:     rgba(255,255,255,0.08);
+      --border:       rgba(62,200,124,0.18);
+      --border2:      rgba(62,200,124,0.28);
+      --text:         #e8f5ee;
+      --text-muted:   #8bbfa0;
+      --sidebar-w:    260px;
+    }
+    body { font-family: 'Outfit', sans-serif; background: var(--green-deep); color: var(--text); min-height: 100vh; display: flex; }
+
+    /* Sidebar (same as admin) */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: linear-gradient(180deg, #0f3d24 0%, #09271a 100%);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+    }
+    .sidebar-brand { padding: 1.8rem 1.5rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+    .brand-icon {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, var(--green-bright), var(--green-glow));
+      border-radius: 12px; display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; box-shadow: 0 0 20px rgba(82,232,145,0.35);
+    }
+    .brand-text h2 { font-size: 1.2rem; font-weight: 700; color: var(--faded-white); }
+    .brand-text span { font-size: 0.75rem; color: var(--text-muted); }
+    .sidebar-nav { flex: 1; padding: 1.2rem 1rem; }
+    .nav-section-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); padding: 0.8rem 0.6rem 0.4rem; }
+    .nav-link {
+      display: flex; align-items: center; gap: 12px;
+      padding: 0.7rem 0.9rem; border-radius: 10px;
+      color: var(--text-muted); font-size: 0.9rem; font-weight: 500;
+      text-decoration: none; transition: all 0.2s;
+    }
+    .nav-link:hover, .nav-link.active { background: rgba(39,160,90,0.18); color: var(--green-light); }
+    .sidebar-footer { padding: 1rem; border-top: 1px solid var(--border); }
+    .user-info { display: flex; align-items: center; gap: 10px; padding: 0.6rem 0.5rem; }
+    .user-avatar {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, #165c34, var(--green-bright));
+      border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700; color: #fff;
+    }
+    .user-meta strong { display: block; font-size: 0.88rem; color: var(--text); }
+    .user-meta span { font-size: 0.75rem; color: var(--green-bright); }
+    .btn-logout {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 0.65rem;
+      background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25);
+      border-radius: 10px; color: #fca5a5;
+      font-family: 'Outfit', sans-serif; font-size: 0.88rem; font-weight: 500;
+      cursor: pointer; text-decoration: none; margin-top: 0.75rem; transition: all 0.2s;
+    }
+    .btn-logout:hover { background: rgba(239,68,68,0.22); }
+
+    /* Main */
+    .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; }
+    .topbar {
+      padding: 1.3rem 2rem; border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .topbar h1 { font-size: 1.4rem; font-weight: 700; color: var(--faded-white); }
+    .topbar .breadcrumb { font-size: 0.82rem; color: var(--text-muted); margin-top: 2px; }
+    .content { padding: 2rem; flex: 1; }
+
+    /* Filter bar */
+    .filter-bar {
+      display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .filter-bar input {
+      flex: 1; min-width: 200px;
+      padding: 0.7rem 1rem;
+      background: var(--surface); border: 1px solid var(--border2); border-radius: 12px;
+      color: var(--text); font-family: 'Outfit', sans-serif; font-size: 0.88rem; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .filter-bar input:focus { border-color: var(--green-bright); box-shadow: 0 0 0 3px rgba(39,160,90,0.15); }
+    .filter-bar input::placeholder { color: var(--text-muted); }
+    .record-count {
+      padding: 0.5rem 1rem;
+      background: rgba(39,160,90,0.1); border: 1px solid var(--border2);
+      border-radius: 20px; font-size: 0.82rem; color: var(--green-light);
+      white-space: nowrap;
+    }
+    .btn-back {
+      padding: 0.6rem 1.2rem;
+      background: var(--surface); border: 1px solid var(--border2);
+      border-radius: 10px; color: var(--text-muted);
+      font-family: 'Outfit', sans-serif; font-size: 0.82rem; font-weight: 500;
+      text-decoration: none; transition: all 0.2s;
+    }
+    .btn-back:hover { color: var(--faded-white); background: var(--surface2); }
+
+    /* Table */
+    .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: rgba(39,160,90,0.1); border-bottom: 1px solid var(--border); position: sticky; top: 0; }
+    thead th { padding: 1rem 1.2rem; text-align: left; font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--surface2); }
+    tbody td { padding: 0.9rem 1.2rem; font-size: 0.88rem; }
+    .badge-present { display: inline-block; padding: 0.25rem 0.7rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; background: rgba(39,160,90,0.15); color: var(--green-light); border: 1px solid rgba(39,160,90,0.3); }
+
+    .row-num { color: var(--text-muted); font-size: 0.8rem; }
+    .empty-state { padding: 3rem; text-align: center; color: var(--text-muted); font-size: 0.9rem; }
+    .empty-state .big { font-size: 3rem; margin-bottom: 0.5rem; }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(62,200,124,0.3); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">🎓</div>
+    <div class="brand-text"><h2>AttendX</h2><span>Admin Panel</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Overview</div>
+    <a href="/admin_dashboard" class="nav-link"><span>📊</span> Dashboard</a>
+    <div class="nav-section-label">Management</div>
+    <a href="/view_attendance" class="nav-link active"><span>📋</span> All Attendance</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="user-avatar">{{ session['username'][0].upper() }}</div>
+      <div class="user-meta">
+        <strong>{{ session['username'] }}</strong>
+        <span>Administrator</span>
+      </div>
+    </div>
+    <a href="/logout" class="btn-logout">🚪 Logout</a>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div>
+      <h1>All Attendance Records</h1>
+      <p class="breadcrumb">AttendX › Attendance Logs</p>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="filter-bar">
+      <a href="/admin_dashboard" class="btn-back">← Back to Dashboard</a>
+      <input type="text" id="search-input" placeholder="🔍 Search by username..." oninput="filterTable()"/>
+      <div class="record-count" id="record-count">{{ records | length }} Records</div>
+    </div>
+
+    <div class="table-wrap">
+      {% if records %}
+      <table id="attendance-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Student</th>
+            <th>Date & Time</th>
+            <th>Status</th>
+            <th>Latitude</th>
+            <th>Longitude</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for i, r in enumerate(records) %}
+          <tr>
+            <td class="row-num">{{ i + 1 }}</td>
+            <td><strong>{{ r.username }}</strong></td>
+            <td style="color: var(--text-muted);">{{ r.time.strftime('%d %b %Y, %I:%M %p') }}</td>
+            <td><span class="badge-present">✅ {{ r.status }}</span></td>
+            <td style="font-size:0.82rem; color:var(--text-muted);">{{ "%.5f"|format(r.latitude) if r.latitude else "—" }}</td>
+            <td style="font-size:0.82rem; color:var(--text-muted);">{{ "%.5f"|format(r.longitude) if r.longitude else "—" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state">
+        <div class="big">📋</div>
+        No attendance records found yet.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</main>
+
+<script>
+  function filterTable() {
+    const q = document.getElementById('search-input').value.toLowerCase();
+    const rows = document.querySelectorAll('#attendance-table tbody tr');
+    let visible = 0;
+    rows.forEach(row => {
+      const name = row.cells[1].textContent.toLowerCase();
+      const show = name.includes(q);
+      row.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    document.getElementById('record-count').textContent = visible + ' Records';
+  }
+</script>
+</body>
+</html>

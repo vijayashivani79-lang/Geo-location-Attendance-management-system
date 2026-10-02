@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Manage Subjects – AttendX Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green-deep:   #09271a;
+      --green-dark:   #0f3d24;
+      --green-mid:    #165c34;
+      --green-bright: #27a05a;
+      --green-light:  #3ecf7c;
+      --green-glow:   #52e891;
+      --faded-white:  #e8f5ee;
+      --surface:      rgba(255,255,255,0.04);
+      --surface2:     rgba(255,255,255,0.08);
+      --border:       rgba(62,200,124,0.18);
+      --border2:      rgba(62,200,124,0.30);
+      --text:         #e8f5ee;
+      --text-muted:   #8bbfa0;
+      --sidebar-w:    260px;
+    }
+    body { font-family: 'Outfit', sans-serif; background: var(--green-deep); color: var(--text); min-height: 100vh; display: flex; }
+
+    /* ── Sidebar ── */
+    .sidebar { width: var(--sidebar-w); background: linear-gradient(180deg, #0f3d24 0%, #09271a 100%); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; }
+    .sidebar-brand { padding: 1.8rem 1.5rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+    .brand-icon { width: 44px; height: 44px; background: linear-gradient(135deg, var(--green-bright), var(--green-glow)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; box-shadow: 0 0 20px rgba(82,232,145,0.35); }
+    .brand-text h2 { font-size: 1.2rem; font-weight: 700; color: var(--faded-white); }
+    .brand-text span { font-size: 0.75rem; color: var(--text-muted); }
+    .sidebar-nav { flex: 1; padding: 1.2rem 1rem; display: flex; flex-direction: column; gap: 4px; }
+    .nav-section-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); padding: 0.8rem 0.6rem 0.4rem; }
+    .nav-link { display: flex; align-items: center; gap: 12px; padding: 0.7rem 0.9rem; border-radius: 10px; color: var(--text-muted); font-size: 0.9rem; font-weight: 500; text-decoration: none; transition: all 0.2s; }
+    .nav-link:hover, .nav-link.active { background: rgba(39,160,90,0.18); color: var(--green-light); }
+    .sidebar-footer { padding: 1rem; border-top: 1px solid var(--border); }
+    .user-info { display: flex; align-items: center; gap: 10px; padding: 0.6rem 0.5rem; }
+    .user-avatar { width: 36px; height: 36px; background: linear-gradient(135deg, var(--green-mid), var(--green-bright)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700; color: #fff; }
+    .user-meta strong { display: block; font-size: 0.88rem; color: var(--text); }
+    .user-meta span { font-size: 0.75rem; color: var(--green-bright); }
+    .btn-logout { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 0.65rem; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25); border-radius: 10px; color: #fca5a5; font-family:'Outfit',sans-serif; font-size:0.88rem; font-weight:500; cursor:pointer; text-decoration:none; margin-top:0.75rem; transition:all 0.2s; }
+    .btn-logout:hover { background: rgba(239,68,68,0.22); }
+
+    /* ── Main ── */
+    .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; }
+    .topbar { padding: 1.3rem 2rem; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02); display: flex; align-items: center; justify-content: space-between; }
+    .topbar h1 { font-size: 1.4rem; font-weight: 700; color: var(--faded-white); }
+    .topbar .breadcrumb { font-size: 0.82rem; color: var(--text-muted); margin-top: 2px; }
+    .content { padding: 2rem; flex: 1; }
+
+    /* Flash */
+    .flash-msg { padding: 0.85rem 1.1rem; border-radius: 12px; margin-bottom: 1.5rem; font-size: 0.88rem; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+    .flash-msg.error   { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25); color: #fca5a5; }
+    .flash-msg.success { background: rgba(62,200,124,0.12); border: 1px solid rgba(62,200,124,0.25); color: var(--green-glow); }
+
+    /* Layout grid */
+    .page-grid { display: grid; grid-template-columns: 380px 1fr; gap: 1.5rem; align-items: start; }
+
+    /* Cards */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
+    .card-header { padding: 1.1rem 1.4rem; border-bottom: 1px solid var(--border); background: linear-gradient(90deg, rgba(39,160,90,0.1), transparent); display: flex; align-items: center; gap: 10px; }
+    .card-header h2 { font-size: 0.98rem; font-weight: 700; color: var(--faded-white); }
+    .card-header span { font-size: 1.1rem; }
+    .card-body { padding: 1.4rem; }
+
+    /* Form inputs */
+    .form-grp { margin-bottom: 1rem; }
+    .form-grp label { display: block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 6px; }
+    .form-grp input, .form-grp select {
+      width: 100%; padding: 0.75rem 0.9rem;
+      background: rgba(255,255,255,0.06); border: 1px solid var(--border2); border-radius: 10px;
+      color: var(--text); font-family: 'Outfit', sans-serif; font-size: 0.88rem; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-grp input:focus, .form-grp select:focus { border-color: var(--green-bright); box-shadow: 0 0 0 3px rgba(39,160,90,0.15); }
+    .form-grp input::placeholder { color: rgba(139,191,160,0.45); }
+    .form-grp select option { background: var(--green-dark); }
+
+    .btn-primary { width: 100%; padding: 0.82rem; background: linear-gradient(135deg, var(--green-bright), var(--green-glow)); border: none; border-radius: 12px; color: #fff; font-family:'Outfit',sans-serif; font-size:0.92rem; font-weight:700; cursor:pointer; transition: transform 0.2s, box-shadow 0.3s; box-shadow: 0 4px 15px rgba(39,160,90,0.4); margin-top: 6px; }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(39,160,90,0.55); }
+
+    /* Subjects list */
+    .subject-item { display: flex; align-items: center; justify-content: space-between; padding: 0.85rem 1rem; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+    .subject-item:last-child { border-bottom: none; }
+    .subject-item:hover { background: var(--surface2); }
+    .subject-info strong { display: block; font-size: 0.9rem; color: var(--faded-white); }
+    .subject-info span { font-size: 0.78rem; color: var(--text-muted); }
+    .subject-actions { display: flex; gap: 6px; }
+    .btn-sm { padding: 0.3rem 0.7rem; border-radius: 8px; font-family:'Outfit',sans-serif; font-size:0.75rem; font-weight:600; cursor:pointer; transition: all 0.15s; border: none; }
+    .btn-danger { background: rgba(239,68,68,0.12); color: #fca5a5; border: 1px solid rgba(239,68,68,0.25); }
+    .btn-danger:hover { background: rgba(239,68,68,0.22); }
+    .empty-state { padding: 2rem; text-align: center; color: var(--text-muted); font-size: 0.88rem; }
+
+    /* Assign section */
+    .assign-card { margin-top: 0; }
+    .subject-select-row { display: flex; gap: 10px; margin-bottom: 1.2rem; }
+    .subject-select-row .form-grp { margin: 0; flex: 1; }
+
+    /* Student checklist */
+    .student-list { max-height: 320px; overflow-y: auto; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .student-check-item { display: flex; align-items: center; gap: 12px; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.15s; }
+    .student-check-item:last-child { border-bottom: none; }
+    .student-check-item:hover { background: var(--surface2); }
+    .student-check-item input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--green-bright); cursor: pointer; flex-shrink: 0; }
+    .student-check-item label { font-size: 0.88rem; color: var(--text); cursor: pointer; flex: 1; }
+    .student-check-item .already-tag { font-size: 0.72rem; padding: 0.2rem 0.6rem; border-radius: 20px; background: rgba(39,160,90,0.12); color: var(--green-light); border: 1px solid rgba(39,160,90,0.25); }
+
+    /* Select all bar */
+    .select-all-bar {
+      display: flex; align-items: center; gap: 12px;
+      padding: 0.75rem 1rem;
+      background: rgba(39,160,90,0.08); border: 1px solid var(--border2);
+      border-radius: 10px; margin-bottom: 0.7rem; cursor: pointer;
+    }
+    .select-all-bar input { width: 17px; height: 17px; accent-color: var(--green-bright); cursor: pointer; }
+    .select-all-bar label { font-size: 0.88rem; font-weight: 600; color: var(--green-light); cursor: pointer; }
+
+    .btn-assign { width: 100%; padding: 0.82rem; background: linear-gradient(135deg, #7c3aed, #a855f7); border: none; border-radius: 12px; color: #fff; font-family:'Outfit',sans-serif; font-size:0.92rem; font-weight:700; cursor:pointer; transition: transform 0.2s, box-shadow 0.3s; box-shadow: 0 4px 15px rgba(124,58,237,0.4); margin-top: 1rem; }
+    .btn-assign:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(124,58,237,0.55); }
+
+    /* Badge */
+    .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
+    .badge-count { background: rgba(39,160,90,0.15); color: var(--green-light); border: 1px solid rgba(39,160,90,0.3); }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(62,200,124,0.3); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">🎓</div>
+    <div class="brand-text"><h2>AttendX</h2><span>Admin Panel</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Overview</div>
+    <a href="/admin_dashboard" class="nav-link"><span>📊</span> Dashboard</a>
+    <div class="nav-section-label">Management</div>
+    <a href="/manage_subjects" class="nav-link active"><span>📚</span> Manage Subjects</a>
+    <a href="/view_attendance" class="nav-link"><span>📋</span> All Attendance</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="user-avatar">{{ session['username'][0].upper() }}</div>
+      <div class="user-meta">
+        <strong>{{ session['username'] }}</strong>
+        <span>Administrator</span>
+      </div>
+    </div>
+    <a href="/logout" class="btn-logout">🚪 Logout</a>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="main">
+  <div class="topbar">
+    <div>
+      <h1>📚 Subject Management</h1>
+      <p class="breadcrumb">AttendX › Admin › Subjects</p>
+    </div>
+  </div>
+
+  <div class="content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="flash-msg {{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <div class="page-grid">
+      <!-- Left column: Add Subject + Subject List -->
+      <div>
+        <!-- Add Subject -->
+        <div class="card" style="margin-bottom:1.5rem;">
+          <div class="card-header"><span>➕</span><h2>Add New Subject</h2></div>
+          <div class="card-body">
+            <form method="POST" action="/manage_subjects">
+              <input type="hidden" name="action" value="add_subject"/>
+              <div class="form-grp">
+                <label>Subject Name</label>
+                <input type="text" name="name" placeholder="e.g. Data Structures" required/>
+              </div>
+              <div class="form-grp">
+                <label>Total Hours</label>
+                <input type="number" name="total_hours" placeholder="e.g. 60" min="1" required/>
+              </div>
+              <button type="submit" class="btn-primary">➕ Add Subject</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Subject List -->
+        <div class="card">
+          <div class="card-header">
+            <span>📋</span>
+            <h2>All Subjects</h2>
+            <span class="badge badge-count" style="margin-left:auto;">{{ subjects|length }}</span>
+          </div>
+          {% if subjects %}
+            {% for sub in subjects %}
+            <div class="subject-item">
+              <div class="subject-info">
+                <strong>{{ sub.name }}</strong>
+                <span>🕐 {{ sub.total_hours }} hours total</span>
+              </div>
+              <div class="subject-actions">
+                <form method="POST" action="/delete_subject/{{ sub.id }}"
+                      onsubmit="return confirm('Delete {{ sub.name }}? This will remove all assignments.')">
+                  <button type="submit" class="btn-sm btn-danger">🗑 Delete</button>
+                </form>
+              </div>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="empty-state">
+              <div style="font-size:2rem;margin-bottom:8px;">📚</div>
+              No subjects yet. Add one above.
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Right column: Assign Subjects to Students -->
+      <div class="card assign-card">
+        <div class="card-header"><span>👥</span><h2>Assign Subject to Students</h2></div>
+        <div class="card-body">
+          {% if subjects %}
+          <form method="POST" action="/assign_subject" id="assignForm">
+            <!-- Subject picker -->
+            <div class="form-grp">
+              <label>Select Subject to Assign</label>
+              <select name="subject_id" id="subject-picker" required onchange="updateAlreadyTags()">
+                <option value="">— Choose a subject —</option>
+                {% for sub in subjects %}
+                <option value="{{ sub.id }}">{{ sub.name }} ({{ sub.total_hours }}h)</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- Select All -->
+            <div class="select-all-bar">
+              <input type="checkbox" id="select-all" name="select_all" onchange="toggleAll(this)"/>
+              <label for="select-all">✅ Select All Students</label>
+            </div>
+
+            <!-- Student checklist -->
+            <div class="student-list" id="student-list">
+              {% if students %}
+                {% for student in students %}
+                <div class="student-check-item" id="row-{{ student.id }}">
+                  <input type="checkbox" name="student_ids" id="stu-{{ student.id }}"
+                         value="{{ student.id }}" class="student-cb"/>
+                  <label for="stu-{{ student.id }}">{{ student.username }}</label>
+                  <span class="already-tag" id="already-{{ student.id }}" style="display:none;">✓ Assigned</span>
+                </div>
+                {% endfor %}
+              {% else %}
+                <div class="empty-state">No students registered yet.</div>
+              {% endif %}
+            </div>
+
+            <button type="submit" class="btn-assign">🎯 Assign Selected Subject</button>
+          </form>
+
+          <!-- Assignment map for JS -->
+          <script>
+            const ASSIGNED_MAP = {
+              {% for sub in subjects %}
+              "{{ sub.id }}": [{% if sub.id in assigned_map %}{% for uid in assigned_map[sub.id] %}{{ uid }},{% endfor %}{% endif %}],
+              {% endfor %}
+            };
+
+            function updateAlreadyTags() {
+              const selSubject = document.getElementById('subject-picker').value;
+              const assigned = ASSIGNED_MAP[selSubject] || [];
+              document.querySelectorAll('.student-cb').forEach(cb => {
+                const uid = parseInt(cb.value);
+                const tag = document.getElementById('already-' + uid);
+                if (assigned.includes(uid)) {
+                  tag.style.display = 'inline-block';
+                } else {
+                  tag.style.display = 'none';
+                }
+              });
+            }
+
+            function toggleAll(el) {
+              document.querySelectorAll('.student-cb').forEach(cb => cb.checked = el.checked);
+            }
+
+            // Keep "Select All" checkbox in sync
+            document.querySelectorAll('.student-cb').forEach(cb => {
+              cb.addEventListener('change', () => {
+                const all = document.querySelectorAll('.student-cb');
+                const checked = document.querySelectorAll('.student-cb:checked');
+                document.getElementById('select-all').checked = all.length === checked.length;
+              });
+            });
+          </script>
+
+          {% else %}
+          <div class="empty-state" style="padding: 3rem;">
+            <div style="font-size:2.5rem;margin-bottom:10px;">➕</div>
+            <p style="font-weight:600;color:var(--faded-white);margin-bottom:6px;">No Subjects Found</p>
+            <p>Add a subject on the left before assigning.</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+</body>
+</html>
